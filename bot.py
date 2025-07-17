@@ -80,11 +80,11 @@ async def handler_comment(event):
                 print(f"Ошибка отправки: {e}")
 
 async def main():
+    await bot.start()  # стартуем клиента (если сессия валидна, не требует ввода)
     global post_map
     post_map = await get_post_ids()
     print("Бот запущен. Ожидаю события...")
     await bot.run_until_disconnected()
 
 if __name__ == '__main__':
-    bot.start()  # Использует загруженный .session, не требует ввода
     asyncio.run(main())
