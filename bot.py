@@ -7,7 +7,7 @@ import gspread
 
 from telethon import TelegramClient, events
 from oauth2client.service_account import ServiceAccountCredentials
-from config import API_ID, API_HASH, SESSION_NAME, GOOGLE_SHEET_NAME
+from config import API_ID, API_HASH, SESSION_NAME
 
 # === Декодирование GOOGLE_CREDENTIALS_BASE64 ===
 def decode_credentials_from_env():
@@ -25,16 +25,18 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 credentials_path = decode_credentials_from_env()
 creds = ServiceAccountCredentials.from_json_keyfile_name(credentials_path, scope)
 client_gs = gspread.authorize(creds)
+
+GOOGLE_SHEET_NAME = os.getenv("GOOGLE_SHEET_NAME", "КАДРОФФ TG реакции бот")
 sheet = client_gs.open(GOOGLE_SHEET_NAME).sheet1
 
 def load_rules():
     data = sheet.get_all_records()
     rules = []
     for row in data:
-        keyword = str(row['кодовое слово']).strip().lower()
-        reaction = str(row['реакция']).strip()
-        link = row['ссылка на пост']
-        message = row['сообщение']
+        keyword = str(row.get('Кодовое слово', '')).strip().lower()
+        reaction = str(row.get('Реакция', '')).strip()
+        link = row.get('Ссылка на пост', '')
+        message = row.get('Сообщение', '')
         rules.append({'keyword': keyword, 'reaction': reaction, 'link': link, 'message': message})
     return rules
 
@@ -77,11 +79,6 @@ async def handler_comment(event):
             except Exception as e:
                 print(f"Ошибка отправки: {e}")
 
-# (Необязательный хендлер реакций: зависит от доступа к raw updates)
-@bot.on(events.Raw)
-async def handler_reactions(event):
-    pass  # Реализация может зависеть от изменений Telegram API
-
 async def main():
     global post_map
     post_map = await get_post_ids()
@@ -89,5 +86,5 @@ async def main():
     await bot.run_until_disconnected()
 
 if __name__ == '__main__':
-    bot.start()
+    bot.start()  # Использует загруженный .session, не требует ввода
     asyncio.run(main())
